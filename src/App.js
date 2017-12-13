@@ -1,7 +1,5 @@
 import React, { Component } from 'react'
 import './App.css'
-import MonetaryUnit from './MonetaryUnit'
-import CurrencyModal from './CurrencyModal'
 
 document.ontouchmove = (event) => {
   event.preventDefault()
@@ -11,33 +9,27 @@ class App extends Component {
   constructor() {
     super()
     this.state = {
-      amount: '0.00',
-      base: 'BTC',
-      currency: 'USD',
-      digital: 'Bitcoin',
+      btcAmount: '0.00',
+      ethAmount: '0.00',
+      ltcAmount: '0.00',
       refreshInterval: 1,
-      seconds: 60,
-      showModal: false,
+      seconds: 60
     }
 
-    this.open = this.open.bind(this)
-    this.close = this.close.bind(this)
-    this.changeCurrency = this.changeCurrency.bind(this)
-    this.getPrice = this.getPrice.bind(this)
+    this.getBtcPrice = this.getBtcPrice.bind(this)
+    this.getEthPrice = this.getEthPrice.bind(this)
+    this.getLtcPrice = this.getLtcPrice.bind(this)
   }
 
-  getPrice() {
-    let base = this.state.base
-    let currency = this.state.currency
-    let currencyPair = base + '-' + currency
-    let apiURL = 'https://api.coinbase.com/v2/prices/' + currencyPair + '/spot'
+  getBtcPrice() {
+    let apiURL = 'https://api.coinbase.com/v2/prices/BTC-USD/spot'
 
     fetch(apiURL).then(
       (response) => response.json()
     ).then(
       (json) => {
         let data = json.data
-        this.setState({ amount: data.amount })
+        this.setState({ btcAmount: data.amount })
       }
     ).catch(
       (err) => {
@@ -46,32 +38,52 @@ class App extends Component {
     )
   }
 
-  open() {
-    this.setState({showModal: true})
+  getEthPrice() {
+    let apiURL = 'https://api.coinbase.com/v2/prices/ETH-USD/spot'
+
+    fetch(apiURL).then(
+      (response) => response.json()
+    ).then(
+      (json) => {
+        let data = json.data
+        this.setState({ ethAmount: data.amount })
+      }
+    ).catch(
+      (err) => {
+        console.error('Network error: ' + err);
+      }
+    )
   }
 
-  close() {
-    this.setState({showModal: false})
-  }
+  getLtcPrice() {
+    let apiURL = 'https://api.coinbase.com/v2/prices/LTC-USD/spot'
 
-  changeCurrency(e) {
-    this.setState({
-      base: e.base,
-      currency: e.currency,
-      digital: e.digital,
-      seconds: 0,
-    })
-    this.close()
+    fetch(apiURL).then(
+      (response) => response.json()
+    ).then(
+      (json) => {
+        let data = json.data
+        this.setState({ ltcAmount: data.amount })
+      }
+    ).catch(
+      (err) => {
+        console.error('Network error: ' + err);
+      }
+    )
   }
 
   componentWillMount() {
-    this.getPrice()
+    this.getBtcPrice()
+    this.getEthPrice()
+    this.getLtcPrice()
   }
 
   componentDidMount() {
     setInterval(() => {
       if (this.state.seconds === 0) {
-        this.getPrice()
+        this.getBtcPrice()
+        this.getEthPrice()
+        this.getLtcPrice()
         this.setState((prevState) => ({
           seconds: (this.state.refreshInterval * 60)
         }))
@@ -87,41 +99,32 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-
-        <nav>
-          <a className="brand" href="/coinbase-dashboard">Coinbase Dashboard</a>
-          <a onClick={this.open} style={{float: 'right'}}>Settings</a>
-        </nav>
-
         <div className="container-fluid">
 
-          <div className="dashboard">
-            <div className="currency">
-              <h3>{this.state.digital}</h3>
-              <div className="price">
-                <h1 className="display-1">
-                  <MonetaryUnit currency={this.state.currency} />{this.state.amount}
-                </h1>
-                <small className="refreshStatus">{this.state.seconds} seconds until refresh</small>
-              </div>
+          <div className="currency">
+            <div className="price">
+              <h1 className="display-1">
+                BTC: {this.state.btcAmount}
+              </h1>
+            </div>
+          </div>
+          <div className="currency">
+            <div className="price">
+              <h1 className="display-1">
+                ETH: {this.state.ethAmount}
+              </h1>
+            </div>
+          </div>
+          <div className="currency">
+            <div className="price">
+              <h1 className="display-1">
+                LTC: {this.state.ltcAmount}
+              </h1>
+              <h2 className="refreshStatus">{this.state.seconds} </h2>
             </div>
           </div>
 
-          <footer>
-            <small>Bitcoin pricing supplied by Coinbase API</small>
-          </footer>
-
         </div>
-
-        <CurrencyModal
-          close={this.close}
-          changeCurrency={this.changeCurrency}
-          showModal={this.state.showModal}
-          base={this.state.base}
-          currency={this.state.currency}
-          digital={this.state.digital}
-        />
-
       </div>
 
     );
